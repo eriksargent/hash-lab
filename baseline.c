@@ -5,12 +5,12 @@
 
 
 //From the definitions here: https://en.wikipedia.org/wiki/MD5#Algorithm
-#define F(B, C, D) ((B & C) | (~B & D));
-#define G(B, C, D) ((B & C) | (C & ~D));
-#define H(B, C, D) (B ^ C ^ D);
-#define I(B, C, D) (C ^ (B | ~D));
+#define F(B, C, D) ((B & C) | (~B & D))
+#define G(B, C, D) ((B & C) | (C & ~D))
+#define H(B, C, D) (B ^ C ^ D)
+#define I(B, C, D) (C ^ (B | ~D))
 
-#define LEFTROT(val, amt) val = (val << amt) | (val >> (32 - amt));
+#define LEFTROT(val, amt) val = (val << amt) | (val >> (32 - amt))
 
 #define R1(A, B, C, D, x, s, T) \
 			A += F(B, C, D) + x + T; \
