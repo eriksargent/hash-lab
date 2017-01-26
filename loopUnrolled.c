@@ -2,117 +2,171 @@
 #include <stdint.h>
 #include <string.h>
 #include "md5_constants.h"
+#include <arpa/inet.h>
+
+// Initial first block values
+uint32_t At = 0x67452301;
+uint32_t Bt = 0xefcdab89;
+uint32_t Ct = 0x98badcfe;
+uint32_t Dt = 0x10325476;
+
+
+/*Function Definitions*/
+void padSingleChunk(union Chunk *input, char *str);
+void md5LoopUnrolled(union Chunk *c, union Chunk *output);
+void printPaddedChunk(union Chunk Input);
+void printOutputHash(union Chunk Output);
+void runMD5(union Chunk message, char * passwd);
+/*End Function Definitions*/
+
+
+
 
 int main(int argc, char *argv[])
 {
-	int A = 0x01234567;
-	int B = 0x89ABCDEF;
-	int C = 0xFEDCBA89;
-	int D = 0x76543210;
-
-	char *passwd = "abcdefghij";
-
-    union Chunk message;						//message is 512 bits long
-	memset(&message.C8[0], 0, 64);				//initialize
-	int len = strlen(passwd);					//passwd length
-
-	memcpy(&message, passwd, len); 				//place passwd into Chunk Message
-	message.C8[len] = 0x80;						//set last bit = 1
-	message.C64[7] = len * 8;					//set bit size 
-
-	for (int index = 0; index < 63; index++) 
-	{
-		printf("%#02x \n", message.C8[index]);
-	}
+	char *passwd = "aaaaaa";
+    union Chunk message;
+	
+	runMD5(message,passwd);				//Run MD5 Hashing Algorithm
 }
 
-void functionCall(union Block *b, int H0, int H1, int H2, int H3)
+void runMD5(union Chunk message, char * passwd)
 {
-	A = H0;
-	B = H1;
-	C = H2;
-	D = H3;
+	union Chunk output; 				//Where to store final hash
 
-	/* Round1 */
-	Round1(A, B, C, D, b->C32[0],  7, (0xd76aa478)); //1
-	Round1(D, A, B, C, b->C32[1], 12, (0xe8c7b756)); //2
-    Round1(C, D, A, B, b->C32[2], 17, (0x242070db)); //3
-    Round1(B, C, D, A, b->C32[3], 22, (0xc1bdceee)); //4
-    
-    Round1(A, B, C, D, b->C32[4],  7, (0xf57c0faf)); //5
-    Round1(D, A, B, C, b->C32[5], 12, (0x4787c62a)); //6
-    Round1(C, D, A, B, b->C32[6], 17, (0xa8304613)); //7
-    Round1(B, C, D, A, b->C32[7], 22, (0xfd469501)); //8
-    
-    Round1(A, B, C, D, b->C32[8],  7, (0x698098d8)); //9
-    Round1(D, A, B, C, b->C32[9], 12, (0x8b44f7af)); //10
-    Round1(C, D, A, B, b->C32[10],17, (0xffff5bb1)); //11
-    Round1(B, C, D, A, b->C32[11],22, (0x895cd7be)); //12
-    
-    Round1(A, B, C, D, b->C32[12], 7, (0x6b901122)); //13
-    Round1(D, A, B, C, b->C32[13],12, (0xfd987193)); //14
-    Round1(C, D, A, B, b->C32[14],17, (0xa679438e)); //15
-    Round1(B, C, D, A, b->C32[15],22, (0x49b40821)); //16
+	padSingleChunk(&message, passwd);
+	printPaddedChunk(message);
+	md5LoopUnrolled(&message,&output);
+	printOutputHash(output);
+}
 
-	/* Round2 */
-	Round2(A, B, C, D, b->C32[ 1], 5, (0xf61e2562)); //17
-    Round2(D, A, B, C, b->C32[ 6] ,9, (0xc040b340)); //18 
-    Round2(C, D, A, B, b->C32[11],14, (0x265e5a51)); //19
-    Round2(B, C, D, A, b->C32[ 0],20, (0xe9b6c7aa)); //20 
+void printPaddedChunk(union Chunk Input)
+{
+	for (int index = 0; index < 63; index++)
+	{
+		 printf("%#02x ", (uint8_t) Input.C8[index]);
 
-    Round2(A, B, C, D, b->C32[ 5], 5, (0xd62f105d)); //21 
-    Round2(D, A, B, C, b->C32[10], 9, (0x02441453)); //22 
-    Round2(C, D, A, B, b->C32[15],14, (0xd8a1e681)); //23
-    Round2(B, C, D, A, b->C32[ 4],20, (0xe7d3fbc8)); //24
+		 if(((index+1)%8)==0)
+		 {
+		 	printf("\n");
+		 }
+	}
+	printf("\n");
+}
 
-    Round2(A, B, C, D, b->C32[ 9], 5, (0x21e1cde6)); //25 
-    Round2(D, A, B, C, b->C32[14], 9, (0xc33707d6)); //26 
-    Round2(C, D, A, B, b->C32[ 3],14, (0xf4d50d87)); //27
-    Round2(B, C, D, A, b->C32[ 8],20, (0x455a14ed)); //28
+void printOutputHash(union Chunk Output)
+{
+	printf("Final Hash: %x %x %x %x \n", Output.C32[0], Output.C32[1], Output.C32[2], Output.C32[3]);
+}
 
-    Round2(A, B, C, D, b->C32[13], 5, (0xa9e3e905)); //29 
-    Round2(D, A, B, C, b->C32[ 2], 9, (0xfcefa3f8)); //30 
-    Round2(C, D, A, B, b->C32[ 7],24, (0x676f02d9)); //31
-    Round2(B, C, D, A, b->C32[12],20, (0x8d2a4c8a)); //32
+void padSingleChunk(union Chunk *input, char * str)
+{
+	memset(&input->C8[0],0,64);			//Initialize message with 0's
+	int len = strlen(str);				//Get length of string
+	memcpy(input, str, len);			//Copy Password Guess into union Chunk
+	input->C8[len] = 0x80;				//Set Bit after Guess to 1
+	input->C64[7] = len*8;				//Set Size of Guess in last 64 bits
+}
 
-	/* Round3 */
-	Round3(A, B, C, D, b->C32[ 5], 4, (0xfffa3942)); // 33 
-    Round3(D, A, B, C, b->C32[ 8],11, (0x8771f681)); // 34 
-    Round3(C, D, A, B, b->C32[11],16, (0x6d9d6122)); // 35 
-    Round3(B, C, D, A, b->C32[14],23, (0xfde5380c)); // 36 
+void md5LoopUnrolled(union Chunk *c, union Chunk *Output)
+{
+	uint32_t A = At;
+	uint32_t B = Bt;
+	uint32_t C = Ct;
+	uint32_t D = Dt;
 
-    Round3(A, B, C, D, b->C32[ 1], 4, (0xa4beea44)); // 37 
-    Round3(D, A, B, C, b->C32[ 4],11, (0x4bdecfa9)); // 38 
-    Round3(C, D, A, B, b->C32[ 7],16, (0xf6bb4b60)); // 39 
-    Round3(B, C, D, A, b->C32[10],23, (0xbebfbc70)); // 40 
+    // Round1
+    Round1(A, B, C, D, c->C32[0],  S[0],  T[0]); // 1
+    Round1(D, A, B, C, c->C32[1],  S[1],  T[1]); // 2
+    Round1(C, D, A, B, c->C32[2],  S[2],  T[2]); // 3
+    Round1(B, C, D, A, c->C32[3],  S[3],  T[3]); // 4
 
-    Round3(A, B, C, D, b->C32[13], 4, (0x289b7ec6)); // 41 
-    Round3(D, A, B, C, b->C32[ 0],11, (0xeaa127fa)); // 42 
-    Round3(C, D, A, B, b->C32[ 3],16, (0xd4ef3085)); // 43 
-    Round3(B, C, D, A, b->C32[ 6],23, (0x04881d05)); // 44 
+    Round1(A, B, C, D, c->C32[4],  S[4],  T[4]); // 5
+    Round1(D, A, B, C, c->C32[5],  S[5],  T[5]); // 6
+    Round1(C, D, A, B, c->C32[6],  S[6],  T[6]); // 7
+    Round1(B, C, D, A, c->C32[7],  S[7],  T[7]); // 8
 
-    Round3(A, B, C, D, b->C32[ 9], 4, (0xd9d4d039)); // 45 
-    Round3(D, A, B, C, b->C32[12],11, (0xe6dB99e5)); // 46 
-    Round3(C, D, A, B, b->C32[15],16, (0x1fa27cf8)); // 47 
-    Round3(B, C, D, A, b->C32[ 2],23, (0xc4ac5665)); // 48 
+    Round1(A, B, C, D, c->C32[8],  S[8],  T[8]); // 9
+    Round1(D, A, B, C, c->C32[9],  S[9],  T[9]); // 10
+    Round1(C, D, A, B, c->C32[10], S[10], T[10]); // 11
+    Round1(B, C, D, A, c->C32[11], S[11], T[11]); // 12
 
-	/* Round4 */
-	Round4(A, B, C, D, b->C32[ 0], 6, (0xf4292244)); // 49 
-    Round4(D, A, B, C, b->C32[ 7],10, (0x432aff97)); // 50 
-    Round4(C, D, A, B, b->C32[14],15, (0xab9423a7)); // 51 
-    Round4(B, C, D, A, b->C32[ 5],21, (0xfc93a039)); // 52 
+    Round1(A, B, C, D, c->C32[12], S[12], T[12]); // 13
+    Round1(D, A, B, C, c->C32[13], S[13], T[13]); // 14
+    Round1(C, D, A, B, c->C32[14], S[14], T[14]); // 15
+    Round1(B, C, D, A, c->C32[15], S[15], T[15]); // 16
 
-    Round4(A, B, C, D, b->C32[12], 6, (0x655b59c3)); // 53 
-    Round4(D, A, B, C, b->C32[ 3],10, (0x8f0ccc92)); // 54 
-    Round4(C, D, A, B, b->C32[10],15, (0xffeff47d)); // 55 
-    Round4(B, C, D, A, b->C32[ 1],21, (0x85845dd1)); // 56 
+    // Round2
+    Round2(A, B, C, D, c->C32[1],  S[16], T[16]); // 17
+    Round2(D, A, B, C, c->C32[6],  S[17], T[17]); // 18
+    Round2(C, D, A, B, c->C32[11], S[18], T[18]); // 19
+    Round2(B, C, D, A, c->C32[0],  S[19], T[19]); // 20
 
-    Round4(A, B, C, D, b->C32[ 8], 6, (0x6fa87e4f)); // 57 
-    Round4(D, A, B, C, b->C32[15],10, (0xfe2ce6e0)); // 58 
-    Round4(C, D, A, B, b->C32[ 6],15, (0xa3014314)); // 59 
-    Round4(B, C, D, A, b->C32[13],21, (0x4e0811a1)); // 60 
+    Round2(A, B, C, D, c->C32[5],  S[20], T[20]); // 21
+    Round2(D, A, B, C, c->C32[10], S[21], T[21]); // 22
+    Round2(C, D, A, B, c->C32[15], S[22], T[22]); // 23
+    Round2(B, C, D, A, c->C32[4],  S[23], T[23]); // 24
 
-    Round4(A, B, C, D, b->C32[ 4], 6, (0xf7537e82)); // 61 
-    Round4(D, A, B, C, b->C32[11],10, (0xbd3af235)); // 62 
-    Round4(C, D, A, B, b->C32[ 2],15, (0x2ad7d2bb)); // 63 
-    Round4(B, C, D, A, b->C32[ 9],21, (0xeb86d391)); // 64 
+    Round2(A, B, C, D, c->C32[9],  S[24], T[24]); // 25
+    Round2(D, A, B, C, c->C32[14], S[25], T[25]); // 26
+    Round2(C, D, A, B, c->C32[3],  S[26], T[26]); // 27
+    Round2(B, C, D, A, c->C32[8],  S[27], T[27]); // 28
+
+    Round2(A, B, C, D, c->C32[13], S[28], T[28]); // 29
+    Round2(D, A, B, C, c->C32[2],  S[29], T[29]); // 30
+    Round2(C, D, A, B, c->C32[7],  S[30], T[30]); // 31 
+    Round2(B, C, D, A, c->C32[12], S[31], T[31]); // 32
+
+    // Round3
+    Round3(A, B, C, D, c->C32[5],  S[32], T[32]); // 33
+    Round3(D, A, B, C, c->C32[8],  S[33], T[33]); // 34
+    Round3(C, D, A, B, c->C32[11], S[34], T[34]); // 35
+    Round3(B, C, D, A, c->C32[14], S[35], T[35]); // 36
+
+    Round3(A, B, C, D, c->C32[1],  S[36], T[36]); // 37
+    Round3(D, A, B, C, c->C32[4],  S[37], T[37]); // 38
+    Round3(C, D, A, B, c->C32[7],  S[38], T[38]); // 39
+    Round3(B, C, D, A, c->C32[10], S[39], T[39]); // 40
+
+    Round3(A, B, C, D, c->C32[13], S[40], T[40]); // 41
+    Round3(D, A, B, C, c->C32[0],  S[41], T[41]); // 42
+    Round3(C, D, A, B, c->C32[3],  S[42], T[42]); // 43
+    Round3(B, C, D, A, c->C32[6],  S[43], T[43]); // 44
+
+    Round3(A, B, C, D, c->C32[9],  S[44], T[44]); // 45
+    Round3(D, A, B, C, c->C32[12], S[45], T[45]); // 46
+    Round3(C, D, A, B, c->C32[15], S[46], T[46]); // 47
+    Round3(B, C, D, A, c->C32[2],  S[47], T[47]); // 48
+
+    // Round4
+    Round4(A, B, C, D, c->C32[0],  S[48], T[48]); // 49
+    Round4(D, A, B, C, c->C32[7],  S[49], T[49]); // 50
+    Round4(C, D, A, B, c->C32[14], S[50], T[50]); // 51
+    Round4(B, C, D, A, c->C32[5],  S[51], T[51]); // 52
+
+    Round4(A, B, C, D, c->C32[12], S[52], T[52]); // 53
+    Round4(D, A, B, C, c->C32[3],  S[53], T[53]); // 54
+    Round4(C, D, A, B, c->C32[10], S[54], T[54]); // 55
+    Round4(B, C, D, A, c->C32[1],  S[55], T[55]); // 56
+
+    Round4(A, B, C, D, c->C32[8],  S[56], T[56]); // 57
+    Round4(D, A, B, C, c->C32[15], S[57], T[57]); // 58
+    Round4(C, D, A, B, c->C32[6],  S[58], T[58]); // 59
+    Round4(B, C, D, A, c->C32[13], S[59], T[59]); // 60
+
+    Round4(A, B, C, D, c->C32[4],  S[60], T[60]); // 61
+    Round4(D, A, B, C, c->C32[11], S[61], T[61]); // 62
+    Round4(C, D, A, B, c->C32[2],  S[62], T[62]); // 63
+    Round4(B, C, D, A, c->C32[9],  S[63], T[63]); // 64
+
+    Output->C32[0] = At+A;
+    Output->C32[1] = Bt+B;
+    Output->C32[2] = Ct+C;
+    Output->C32[3] = Dt+D;
+}
+
+
+
+
+
+
