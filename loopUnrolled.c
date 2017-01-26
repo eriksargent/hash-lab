@@ -56,7 +56,13 @@ void printPaddedChunk(union Chunk Input)
 
 void printOutputHash(union Chunk Output)
 {
-	printf("Final Hash: %x %x %x %x \n", Output.C32[0], Output.C32[1], Output.C32[2], Output.C32[3]);
+//	printf("Final Hash: %08x %08x %08x %08x \n", Output.C32[0], Output.C32[1], Output.C32[2], Output.C32[3]);
+    printf("Final Hash: ");
+    for (int index = 0; index < 16; index++)
+    {
+        printf("%02x", Output.C8[index]);
+    }
+    printf("\n");
 }
 
 void padSingleChunk(union Chunk *input, char * str)

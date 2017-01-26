@@ -1,1 +1,0 @@
-gcc loopUnrolled.c md5_constants.h -std=gnu99 -o loopUnrolled
