@@ -10,8 +10,14 @@ uint32_t Bt = 0xefcdab89;
 uint32_t Ct = 0x98badcfe;
 uint32_t Dt = 0x10325476;
 
+uint64_t firstHalf  = 0x0b4e7a0e5fe84ad3;// 0xe80b5017098950fc;
+uint64_t secondHalf = 0x5fb5f95b9ceeac79;//0x58aad83c8c14978e'
+
 
 /*Function Definitions*/
+void md5Search();
+void setHashAnswer(uint64_t fh, uint64_t sh);
+int checkOutput(union Chunk *Output);
 void padSingleChunk(union Chunk *input, char *str);
 void md5LoopUnrolled(union Chunk *c, union Chunk *output);
 void printPaddedChunk(union Chunk Input);
@@ -26,8 +32,72 @@ int main(int argc, char *argv[])
 {
 	char *passwd = "aaaaaa";
     union Chunk message;
-	
-	runMD5(message,passwd);				//Run MD5 Hashing Algorithm
+
+
+	md5Search();	
+	//runMD5(message,passwd);				//Run MD5 Hashing Algorithm
+}
+
+void setHashAnswer(uint64_t fh, uint64_t sh)
+{
+	memset(&Known.C64[0], firstHalf,1);
+	memset(&Known.C64[1], secondHalf,1);
+}
+
+void md5Search()
+{
+	union Chunk Input, Output;
+	memset(&Input.C8[0],0,64);
+	Input.C8[6] = 0x80;
+	Input.C64[7] = 0x30;
+
+	for(int i=0;i<26;i++)
+	{
+		Input.C8[5] = alphabet[i];
+		for(int j=0;j<26;j++)
+		{
+			Input.C8[4] = alphabet[j];
+			for(int k=0;k<26;k++)
+			{
+				Input.C8[3] = alphabet[k];
+				for(int l=0;l<26;l++)
+				{
+					Input.C8[2] = alphabet[l];
+					for(int m=0;m<26;m++)
+					{
+						Input.C8[1] = alphabet[m];
+						for(int n=0;n<26;n++)
+						{
+							Input.C8[0] = alphabet[n];
+						/*	for(int index = 0; index < 6; index++)
+							{
+								printf("%c", (uint8_t) Input.C8[index]);
+							}
+							printf(" ");
+						*/
+							md5LoopUnrolled(&Input, &Output);
+							checkOutput(&Output);
+							
+						//	printOutputHash(Output);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+int checkOutput(union Chunk *Output)
+{
+	int returnVal = 0;
+
+	if(((Output->C64[0]^Known.C64[0])|(Output->C64[1]^Known.C64[1])) == 0)
+	{
+		returnVal = 1;
+		printf("Found a match");
+		//printOutputHash(*&Output);
+	}
+	return returnVal;
 }
 
 void runMD5(union Chunk message, char * passwd)
