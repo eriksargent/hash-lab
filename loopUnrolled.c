@@ -10,13 +10,12 @@ uint32_t Bt = 0xefcdab89;
 uint32_t Ct = 0x98badcfe;
 uint32_t Dt = 0x10325476;
 
-uint64_t firstHalf  = 0x0b4e7a0e5fe84ad3;// 0xe80b5017098950fc;
-uint64_t secondHalf = 0x5fb5f95b9ceeac79;//0x58aad83c8c14978e'
+char *inputHash = "e80b5017098950fc58aad83c8c14978e";
 
 
 /*Function Definitions*/
 void md5Search();
-void setHashAnswer(uint64_t fh, uint64_t sh);
+void setHashAnswer(char *);
 int checkOutput(union Chunk *Output);
 void padSingleChunk(union Chunk *input, char *str);
 void md5LoopUnrolled(union Chunk *c, union Chunk *output);
@@ -30,6 +29,8 @@ void runMD5(union Chunk message, char * passwd);
 
 int main(int argc, char *argv[])
 {
+    setHashAnswer(inputHash);
+
 	char *passwd = "aaaaaa";
     union Chunk message;
 
@@ -38,10 +39,13 @@ int main(int argc, char *argv[])
 	//runMD5(message,passwd);				//Run MD5 Hashing Algorithm
 }
 
-void setHashAnswer(uint64_t fh, uint64_t sh)
+void setHashAnswer(char *input)
 {
-	memset(&Known.C64[0], firstHalf,1);
-	memset(&Known.C64[1], secondHalf,1);
+    unsigned int first;
+    unsigned int second;
+    sscanf(input, "%016x%016x", &first, &second);
+	memset(&Known.C64[0], first, 1);
+	memset(&Known.C64[1], second, 1);
 }
 
 void md5Search()
@@ -99,7 +103,13 @@ int checkOutput(union Chunk *Output)
 		//printOutputHash(*&Output);
 	}
 */
-	
+
+    if (((Output->C64[0] ^ Known.C64[0]) | (Output->C64[1] ^ Known.C64[1])) == 0)
+    {
+        printf("Found Answer!\n\n");
+        return 1;
+    }
+	/*
 	int a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p;
 	a = (Output->C8[0]^0xe8);
 	b = (Output->C8[1]^0x0b);
@@ -125,6 +135,10 @@ int checkOutput(union Chunk *Output)
 	}	
 
 	return returnVal;
+    */
+
+
+    return 0;
 }
 
 void runMD5(union Chunk message, char * passwd)
