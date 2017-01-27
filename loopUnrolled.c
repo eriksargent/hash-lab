@@ -30,7 +30,6 @@ int main(int argc, char *argv[])
 {
     setHashAnswer(inputHash);
 
-	char *passwd = "aaaaaa";
     union Chunk message;
 
     struct timeval start, end;
