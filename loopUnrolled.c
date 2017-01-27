@@ -69,16 +69,17 @@ void md5Search()
 						for(int n=0;n<26;n++)
 						{
 							Input.C8[0] = alphabet[n];
-						/*	for(int index = 0; index < 6; index++)
-							{
-								printf("%c", (uint8_t) Input.C8[index]);
-							}
-							printf(" ");
-						*/
 							md5LoopUnrolled(&Input, &Output);
-							checkOutput(&Output);
-							
-						//	printOutputHash(Output);
+							if(1==checkOutput(&Output))
+							{
+								for(int index = 0; index < 6; index++)
+	                            {
+	                                printf("%c", (uint8_t) Input.C8[index]);
+	                            }
+	                            printf(" ");
+								printOutputHash(Output);
+								return;//will this get me out?
+							}
 						}
 					}
 				}
@@ -90,13 +91,39 @@ void md5Search()
 int checkOutput(union Chunk *Output)
 {
 	int returnVal = 0;
-
+/*
 	if(((Output->C64[0]^Known.C64[0])|(Output->C64[1]^Known.C64[1])) == 0)
 	{
 		returnVal = 1;
 		printf("Found a match");
 		//printOutputHash(*&Output);
 	}
+*/
+	
+	int a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p;
+	a = (Output->C8[0]^0xe8);
+	b = (Output->C8[1]^0x0b);
+	c = (Output->C8[2]^0x50);
+	d = (Output->C8[3]^0x17);
+	e = (Output->C8[4]^0x09);
+	f = (Output->C8[5]^0x89);
+	g = (Output->C8[6]^0x50);
+	h = (Output->C8[7]^0xfc);
+	i = (Output->C8[8]^0x58);
+	j = (Output->C8[9]^0xaa);
+	k = (Output->C8[10]^0xd8);
+	l = (Output->C8[11]^0x3c);
+	m = (Output->C8[12]^0x8c);
+	n = (Output->C8[13]^0x14);
+	o = (Output->C8[14]^0x97);
+	p = (Output->C8[15]^0x83);
+
+	if((a|b|c|d|e|f|g|h|i|j|k)==0)
+	{
+		returnVal = 1;
+		printf("Found Answer!!!!!!!!!!");
+	}	
+
 	return returnVal;
 }
 
