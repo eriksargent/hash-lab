@@ -4,6 +4,7 @@
 #ifndef _MD5_CONSTANTS
 #define _MD5_CONSTANTS
 
+//Store a single chunk of the padded message
 union Chunk
 {
 	uint8_t		C8[64];
@@ -11,7 +12,15 @@ union Chunk
 	uint64_t	C64[8];
 };
 
-union Chunk Known;
+//Store the hashed value
+union Hash
+{
+    uint8_t     C8[16];
+    uint32_t    C32[4];
+    uint64_t    C64[2];
+};
+
+union Hash Known;
 
 uint32_t T[64] = {
 0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,

@@ -3,6 +3,7 @@
 #include <string.h>
 #include "md5_constants.h"
 #include <arpa/inet.h>
+#include <sys/time.h>
 
 // Initial first block values
 uint32_t At = 0x67452301;
@@ -14,17 +15,15 @@ char *inputHash = "e80b5017098950fc58aad83c8c14978e";
 
 
 /*Function Definitions*/
-void md5Search();
+long md5Search();
 void setHashAnswer(char *);
-int checkOutput(union Chunk *Output);
+int checkOutput(union Hash *Output);
 void padSingleChunk(union Chunk *input, char *str);
-void md5LoopUnrolled(union Chunk *c, union Chunk *output);
+void md5LoopUnrolled(union Chunk *c, union Hash *output);
 void printPaddedChunk(union Chunk Input);
-void printOutputHash(union Chunk Output);
+void printOutputHash(union Hash Output);
 void runMD5(union Chunk message, char * passwd);
 /*End Function Definitions*/
-
-
 
 
 int main(int argc, char *argv[])
@@ -34,55 +33,68 @@ int main(int argc, char *argv[])
 	char *passwd = "aaaaaa";
     union Chunk message;
 
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
 
-	md5Search();	
-	//runMD5(message,passwd);				//Run MD5 Hashing Algorithm
+	long hashes = md5Search();
+
+    gettimeofday(&end, NULL);
+
+    double secDiff = end.tv_sec - start.tv_sec;
+    double nsecDiff = end.tv_usec - start.tv_usec;
+    double elapsedTime = secDiff + nsecDiff / 1000000;
+    double hashRate = (double)hashes / elapsedTime;
+
+    printf("\n\nTotal elapsed time: %f\n", elapsedTime);
+    printf("Hashes per second: %f\n", hashRate);
+
+    return 0;
 }
 
 void setHashAnswer(char *input)
 {
-    unsigned int first;
-    unsigned int second;
-    sscanf(input, "%016x%016x", &first, &second);
-	memset(&Known.C64[0], first, 1);
-	memset(&Known.C64[1], second, 1);
+    sscanf(input, "%016llx%016llx", &Known.C64[1], &Known.C64[0]);
+    
+    printf("\nInput hash: %016llx%016llx\n\n", Known.C64[1], Known.C64[0]);
 }
 
-void md5Search()
+long md5Search()
 {
-	union Chunk Input, Output;
+	union Chunk Input;
+    union Hash Output;
 	memset(&Input.C8[0],0,64);
 	Input.C8[6] = 0x80;
 	Input.C64[7] = 0x30;
 
-	for(int i=0;i<26;i++)
+	for (int i=0;i<26;i++)
 	{
 		Input.C8[5] = alphabet[i];
-		for(int j=0;j<26;j++)
+		for (int j=0;j<26;j++)
 		{
 			Input.C8[4] = alphabet[j];
-			for(int k=0;k<26;k++)
+			for (int k=0;k<26;k++)
 			{
 				Input.C8[3] = alphabet[k];
-				for(int l=0;l<26;l++)
+				for (int l=0;l<26;l++)
 				{
 					Input.C8[2] = alphabet[l];
-					for(int m=0;m<26;m++)
+					for (int m=0;m<26;m++)
 					{
 						Input.C8[1] = alphabet[m];
-						for(int n=0;n<26;n++)
+						for (int n=0;n<26;n++)
 						{
 							Input.C8[0] = alphabet[n];
 							md5LoopUnrolled(&Input, &Output);
-							if(1==checkOutput(&Output))
+							if (checkOutput(&Output) == 1)
 							{
-								for(int index = 0; index < 6; index++)
-	                            {
-	                                printf("%c", (uint8_t) Input.C8[index]);
-	                            }
-	                            printf(" ");
 								printOutputHash(Output);
-								return;//will this get me out?
+
+                                printf("The password was: ");
+                                for (int index = 0; index < 6; index++)
+                                {
+                                    printf("%c", (uint8_t) Input.C8[index]);
+                                }
+								return (i * 11881376) + (j * 456976) + (k * 17576) + (l * 676) + (m * 26) + n;
 							}
 						}
 					}
@@ -90,60 +102,40 @@ void md5Search()
 			}
 		}
 	}
+
+    return 308915776; //26^6
 }
 
-int checkOutput(union Chunk *Output)
+int checkOutput(union Hash *Output)
 {
-	int returnVal = 0;
-/*
-	if(((Output->C64[0]^Known.C64[0])|(Output->C64[1]^Known.C64[1])) == 0)
-	{
-		returnVal = 1;
-		printf("Found a match");
-		//printOutputHash(*&Output);
-	}
-*/
-
-    if (((Output->C64[0] ^ Known.C64[0]) | (Output->C64[1] ^ Known.C64[1])) == 0)
+    if ((Output->C8[0] == Known.C8[15]) &
+            (Output->C8[1] == Known.C8[14]) &
+            (Output->C8[2] == Known.C8[13]) &
+            (Output->C8[3] == Known.C8[12]) &
+            (Output->C8[4] == Known.C8[11]) &
+            (Output->C8[5] == Known.C8[10]) &
+            (Output->C8[6] == Known.C8[9]) &
+            (Output->C8[7] == Known.C8[8]) &
+            (Output->C8[8] == Known.C8[7]) &
+            (Output->C8[9] == Known.C8[6]) &
+            (Output->C8[10] == Known.C8[5]) &
+            (Output->C8[11] == Known.C8[4]) &
+            (Output->C8[12] == Known.C8[3]) &
+            (Output->C8[13] == Known.C8[2]) &
+            (Output->C8[14] == Known.C8[1]) &
+            (Output->C8[15] == Known.C8[0]))
     {
-        printf("Found Answer!\n\n");
-        return 1;
+        printf("Found the password!!\n\n");
+        return 1;   
     }
-	/*
-	int a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p;
-	a = (Output->C8[0]^0xe8);
-	b = (Output->C8[1]^0x0b);
-	c = (Output->C8[2]^0x50);
-	d = (Output->C8[3]^0x17);
-	e = (Output->C8[4]^0x09);
-	f = (Output->C8[5]^0x89);
-	g = (Output->C8[6]^0x50);
-	h = (Output->C8[7]^0xfc);
-	i = (Output->C8[8]^0x58);
-	j = (Output->C8[9]^0xaa);
-	k = (Output->C8[10]^0xd8);
-	l = (Output->C8[11]^0x3c);
-	m = (Output->C8[12]^0x8c);
-	n = (Output->C8[13]^0x14);
-	o = (Output->C8[14]^0x97);
-	p = (Output->C8[15]^0x83);
-
-	if((a|b|c|d|e|f|g|h|i|j|k)==0)
-	{
-		returnVal = 1;
-		printf("Found Answer!!!!!!!!!!");
-	}	
-
-	return returnVal;
-    */
-
 
     return 0;
 }
 
 void runMD5(union Chunk message, char * passwd)
 {
-	union Chunk output; 				//Where to store final hash
+    //Where to store final hash
+	union Hash output;
 
 	padSingleChunk(&message, passwd);
 	printPaddedChunk(message);
@@ -165,9 +157,8 @@ void printPaddedChunk(union Chunk Input)
 	printf("\n");
 }
 
-void printOutputHash(union Chunk Output)
+void printOutputHash(union Hash Output)
 {
-//	printf("Final Hash: %08x %08x %08x %08x \n", Output.C32[0], Output.C32[1], Output.C32[2], Output.C32[3]);
     printf("Final Hash: ");
     for (int index = 0; index < 16; index++)
     {
@@ -185,7 +176,7 @@ void padSingleChunk(union Chunk *input, char * str)
 	input->C64[7] = len*8;				//Set Size of Guess in last 64 bits
 }
 
-void md5LoopUnrolled(union Chunk *c, union Chunk *Output)
+void md5LoopUnrolled(union Chunk *c, union Hash *Output)
 {
 	uint32_t A = At;
 	uint32_t B = Bt;
