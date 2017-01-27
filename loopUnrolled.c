@@ -108,21 +108,21 @@ long md5Search()
 
 int checkOutput(union Hash *Output)
 {
-    if ((Output->C8[0] == Known.C8[15]) &
-            (Output->C8[1] == Known.C8[14]) &
-            (Output->C8[2] == Known.C8[13]) &
-            (Output->C8[3] == Known.C8[12]) &
-            (Output->C8[4] == Known.C8[11]) &
-            (Output->C8[5] == Known.C8[10]) &
-            (Output->C8[6] == Known.C8[9]) &
-            (Output->C8[7] == Known.C8[8]) &
-            (Output->C8[8] == Known.C8[7]) &
-            (Output->C8[9] == Known.C8[6]) &
-            (Output->C8[10] == Known.C8[5]) &
-            (Output->C8[11] == Known.C8[4]) &
-            (Output->C8[12] == Known.C8[3]) &
-            (Output->C8[13] == Known.C8[2]) &
-            (Output->C8[14] == Known.C8[1]) &
+    if ((Output->C8[0] == Known.C8[15]) &&
+            (Output->C8[1] == Known.C8[14]) &&
+            (Output->C8[2] == Known.C8[13]) &&
+            (Output->C8[3] == Known.C8[12]) &&
+            (Output->C8[4] == Known.C8[11]) &&
+            (Output->C8[5] == Known.C8[10]) &&
+            (Output->C8[6] == Known.C8[9]) &&
+            (Output->C8[7] == Known.C8[8]) &&
+            (Output->C8[8] == Known.C8[7]) &&
+            (Output->C8[9] == Known.C8[6]) &&
+            (Output->C8[10] == Known.C8[5]) &&
+            (Output->C8[11] == Known.C8[4]) &&
+            (Output->C8[12] == Known.C8[3]) &&
+            (Output->C8[13] == Known.C8[2]) &&
+            (Output->C8[14] == Known.C8[1]) &&
             (Output->C8[15] == Known.C8[0]))
     {
         printf("Found the password!!\n\n");
