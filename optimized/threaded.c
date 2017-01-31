@@ -9,10 +9,10 @@
 
 
 // Initial first block values
-uint32_t At = 0x67452301;
-uint32_t Bt = 0xefcdab89;
-uint32_t Ct = 0x98badcfe;
-uint32_t Dt = 0x10325476;
+#define At 0x67452301
+#define Bt 0xefcdab89
+#define Ct 0x98badcfe
+#define Dt 0x10325476
 
 //char *inputHash = "e80b5017098950fc58aad83c8c14978e"; //abcdef
  char *inputHash = "4e8645994a6f75c7a2ad4959061230c4"; //lmnopq
@@ -55,23 +55,45 @@ int main(int argc, char *argv[])
     
     //Get the number of threads available
     int numThreads = sysconf(_SC_NPROCESSORS_ONLN);
-    pthread_t threads[numThreads];
+    pthread_t threads[4];
 
     //Record the starting time
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
     //Dispatch that many threads
+	/*
     for (int i = 0; i < numThreads; i++) 
     {
         pthread_create(&threads[i], NULL, thread, NULL);
     }
+	*/
+
+	pthread_create(&threads[0], NULL, thread, NULL);
+	pthread_create(&threads[1], NULL, thread, NULL);
+	pthread_create(&threads[2], NULL, thread, NULL);
+	pthread_create(&threads[3], NULL, thread, NULL);
+//	pthread_create(&threads[4], NULL, thread, NULL);
+//	pthread_create(&threads[5], NULL, thread, NULL);
+//	pthread_create(&threads[6], NULL, thread, NULL);
+//	pthread_create(&threads[7], NULL, thread, NULL);
     
     //Wait for all threads to finish
-    for (int i = 0; i < numThreads; i++) 
+    /*
+	for (int i = 0; i < numThreads; i++) 
     {
         pthread_join(threads[i], NULL);
     }
+	*/
+
+	pthread_join(threads[0], NULL);
+	pthread_join(threads[1], NULL);
+	pthread_join(threads[2], NULL);
+	pthread_join(threads[3], NULL);
+//	pthread_join(threads[4], NULL);
+//	pthread_join(threads[5], NULL);
+//	pthread_join(threads[6], NULL);
+//	pthread_join(threads[7], NULL);
 
     //Record the ending time after all threads have finished
     gettimeofday(&end, NULL);
@@ -170,18 +192,22 @@ void *thread()
                     input.C8[5] = alphabet[letters.sixth];
 
                     md5LoopUnrolled(&input, &output);
-                    if (checkOutput(&output) == 1)
-                    {
-                        foundPassword = 1;
+					
+					if((output.C8[0]^Known.C8[15])==0)
+					{
+	                    if (checkOutput(&output) == 1)
+    	                {
+	                        foundPassword = 1;
+						
+	                        printOutputHash(output);
+	                        printf("The password was: ");
 
-                        printOutputHash(output);
-                        printf("The password was: ");
-
-                        for (int index = 0; index < 6; index++)
-                        {
-                            printf("%c", (uint8_t) input.C8[index]);
-                        }
-                    }
+	                        for (int index = 0; index < 6; index++)
+	                        {
+    	                        printf("%c", (uint8_t) input.C8[index]);
+	                        }
+	                    }
+					}
 
                     letters.sixth++;
                 }
@@ -237,26 +263,33 @@ uint8_t getNextLetterBlock(LetterBlock *threadLetters)
 
 int checkOutput(union Hash *Output)
 {
-    if ((Output->C8[0] == Known.C8[15]) &&
-            (Output->C8[1] == Known.C8[14]) &&
-            (Output->C8[2] == Known.C8[13]) &&
-            (Output->C8[3] == Known.C8[12]) &&
-            (Output->C8[4] == Known.C8[11]) &&
-            (Output->C8[5] == Known.C8[10]) &&
-            (Output->C8[6] == Known.C8[9]) &&
-            (Output->C8[7] == Known.C8[8]) &&
-            (Output->C8[8] == Known.C8[7]) &&
-            (Output->C8[9] == Known.C8[6]) &&
-            (Output->C8[10] == Known.C8[5]) &&
-            (Output->C8[11] == Known.C8[4]) &&
-            (Output->C8[12] == Known.C8[3]) &&
-            (Output->C8[13] == Known.C8[2]) &&
-            (Output->C8[14] == Known.C8[1]) &&
-            (Output->C8[15] == Known.C8[0]))
-    {
-        printf("Found the password!!\n\n");
-        return 1;   
-    }
+	/*if((Output->C8[13] == Known.C8[2]))
+	{
+	    if ((Output->C8[0] == Known.C8[15]) &&
+	            (Output->C8[1] == Known.C8[14]) &&
+	            (Output->C8[2] == Known.C8[13]) &&
+	            (Output->C8[3] == Known.C8[12]) &&
+	            (Output->C8[4] == Known.C8[11]) &&
+	            (Output->C8[5] == Known.C8[10]) &&
+	            (Output->C8[6] == Known.C8[9]) &&
+	            (Output->C8[7] == Known.C8[8]) &&
+	            (Output->C8[8] == Known.C8[7]) &&
+	            (Output->C8[9] == Known.C8[6]) &&
+	            (Output->C8[10] == Known.C8[5]) &&
+	            (Output->C8[11] == Known.C8[4]) &&
+        	    (Output->C8[12] == Known.C8[3]) &&
+    	        (Output->C8[13] == Known.C8[2]) &&
+	            (Output->C8[14] == Known.C8[1]) &&
+	            (Output->C8[15] == Known.C8[0]))
+		*/
+		if(((Output->C8[0] ^ Known.C8[15]) |
+			 (Output->C8[1] ^ Known.C8[14]) |
+		     (Output->C8[7] ^ Known.C8[8]) |
+			 (Output->C8[15] ^ Known.C8[0]))==0)
+	    {
+	        printf("Found the password!!\n\n");
+    	    return 1;   
+	    }
 
     return 0;
 }

@@ -1,21 +1,22 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "md5_constants.h"
+#include "md5_constants_gpu.h"
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <unistd.h>
 
+#include <CL/cl.h>
 
 // Initial first block values
-uint32_t At = 0x67452301;
-uint32_t Bt = 0xefcdab89;
-uint32_t Ct = 0x98badcfe;
-uint32_t Dt = 0x10325476;
+__constant uint32_t At 0x67452301
+__constant uint32_t Bt 0xefcdab89
+__constant uint32_t Ct 0x98badcfe
+__constant uint32_t Dt 0x10325476
 
-//char *inputHash = "e80b5017098950fc58aad83c8c14978e"; //abcdef
- char *inputHash = "4e8645994a6f75c7a2ad4959061230c4"; //lmnopq
+char *inputHash = "e80b5017098950fc58aad83c8c14978e"; //abcdef
+// char *inputHash = "4e8645994a6f75c7a2ad4959061230c4"; //lmnopq
 // char *inputHash = "453e41d218e071ccfb2d1c99ce23906a"; //zzzzzz
 
 
