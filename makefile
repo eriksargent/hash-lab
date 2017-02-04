@@ -1,16 +1,22 @@
-all: loopUnrolled 
+all: loopUnrolled threaded vector
 
-loopUnrolled: loopUnrolled.c md5_constants.h
-	gcc -std=gnu99 loopUnrolled.c -o loopUnrolled.out -w
+loopUnrolled: basic/loopUnrolled.c basic/md5_constants.h
+	gcc -std=gnu99 basic/loopUnrolled.c -o basic/loopUnrolled.out -w
 
-threaded: threaded.c md5_constants.h
-	gcc -std=gnu99 -Wno-cpp threaded.c -o threaded.out -pthread
+threaded: threaded/threaded.c threaded/md5_constants.h
+	gcc -std=gnu99 -Wno-cpp -pthread -O3 threaded/threaded.c -o threaded/threaded.out
+
+vector: basic/vector.c basic/md5_vector_constants.h
+	gcc -mavx2 basic/vector.c -o basic/vector.out
 
 test: loopUnrolled
-	./loopUnrolled.out
+	basic/loopUnrolled.out
 
 threadtest: threaded
-	./threaded.out
+	threaded/threaded.out
+
+vectortest: vector
+	basic/vector.out
 
 clean:
-	rm *.out
+	rm */*.out

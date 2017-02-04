@@ -1,36 +1,20 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "md5_constants.h"
+#include "md5_vector_constants.h"
 #include <arpa/inet.h>
 #include <sys/time.h>
-#include <pthread.h>
-#include <unistd.h>
+#include <immintrin.h>
 
 
 // Initial first block values
-uint32_t At = 0x67452301;
-uint32_t Bt = 0xefcdab89;
-uint32_t Ct = 0x98badcfe;
-uint32_t Dt = 0x10325476;
+unsigned int At = 0x67452301;
+unsigned int Bt = 0xefcdab89;
+unsigned int Ct = 0x98badcfe;
+unsigned int Dt = 0x10325476;
 
-//char *inputHash = "e80b5017098950fc58aad83c8c14978e"; //abcdef
- char *inputHash = "4e8645994a6f75c7a2ad4959061230c4"; //lmnopq
-// char *inputHash = "453e41d218e071ccfb2d1c99ce23906a"; //zzzzzz
+char *inputHash = "e80b5017098950fc58aad83c8c14978e";
 
-
-typedef struct {
-    uint8_t first;
-    uint8_t second;
-    uint8_t third;
-    uint8_t fourth;
-    uint8_t fifth;
-    uint8_t sixth;
-} LetterBlock;
-
-LetterBlock letterIndexes;
-
-pthread_mutex_t nextBlockMutex;
 
 /*Function Definitions*/
 long md5Search();
@@ -41,46 +25,29 @@ void md5LoopUnrolled(union Chunk *c, union Hash *output);
 void printPaddedChunk(union Chunk Input);
 void printOutputHash(union Hash Output);
 void runMD5(union Chunk message, char * passwd);
-void *thread();
-uint8_t getNextLetterBlock(LetterBlock *);
 /*End Function Definitions*/
-
-uint8_t foundPassword = 0;
 
 
 int main(int argc, char *argv[])
 {
-    //Load in the hash to find
     setHashAnswer(inputHash);
-    
-    //Get the number of threads available
-    int numThreads = sysconf(_SC_NPROCESSORS_ONLN);
-    pthread_t threads[numThreads];
 
-    //Record the starting time
+    union Chunk message;
+
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
-    //Dispatch that many threads
-    for (int i = 0; i < numThreads; i++) 
-    {
-        pthread_create(&threads[i], NULL, thread, NULL);
-    }
-    
-    //Wait for all threads to finish
-    for (int i = 0; i < numThreads; i++) 
-    {
-        pthread_join(threads[i], NULL);
-    }
+	long hashes = md5Search();
 
-    //Record the ending time after all threads have finished
     gettimeofday(&end, NULL);
 
     double secDiff = end.tv_sec - start.tv_sec;
     double nsecDiff = end.tv_usec - start.tv_usec;
     double elapsedTime = secDiff + nsecDiff / 1000000;
+    double hashRate = (double)hashes / elapsedTime;
 
     printf("\n\nTotal elapsed time: %f\n", elapsedTime);
+    printf("Hashes per second: %f\n", hashRate);
 
     return 0;
 }
@@ -138,101 +105,6 @@ long md5Search()
 	}
 
     return 308915776; //26^6
-}
-
-void *thread() 
-{
-    union Chunk input;
-    memset(&input.C8[0],0,64);
-    input.C8[6] = 0x80;
-    input.C64[7] = 0x30;
-
-    union Hash output;
-
-    LetterBlock letters;
-
-    while (getNextLetterBlock(&letters) == 0) 
-    {
-        input.C8[0] = alphabet[letters.first];
-        input.C8[1] = alphabet[letters.second];
-        input.C8[2] = alphabet[letters.third];
-
-        while (letters.fourth < NumLetters)
-        {
-            input.C8[3] = alphabet[letters.fourth];
-
-            while (letters.fifth < NumLetters)
-            {
-                input.C8[4] = alphabet[letters.fifth];
-
-                while (letters.sixth < NumLetters)
-                {
-                    input.C8[5] = alphabet[letters.sixth];
-
-                    md5LoopUnrolled(&input, &output);
-                    if (checkOutput(&output) == 1)
-                    {
-                        foundPassword = 1;
-
-                        printOutputHash(output);
-                        printf("The password was: ");
-
-                        for (int index = 0; index < 6; index++)
-                        {
-                            printf("%c", (uint8_t) input.C8[index]);
-                        }
-                    }
-
-                    letters.sixth++;
-                }
-
-                letters.sixth = 0;
-                letters.fifth++;
-            }
-
-            letters.fifth = 0;
-            letters.fourth++;
-        }
-
-        letters.fourth = 0;
-    }
-
-    return 0;
-}
-
-uint8_t getNextLetterBlock(LetterBlock *threadLetters) 
-{
-    if (foundPassword != 0)
-        return 1;
-
-    pthread_mutex_lock(&nextBlockMutex);
-    
-    letterIndexes.third++;
-    if (letterIndexes.third >= NumLetters) 
-    {
-        letterIndexes.third = 0;
-        letterIndexes.second++;
-        
-        if (letterIndexes.second >= NumLetters) 
-        {
-            letterIndexes.second = 0;
-            letterIndexes.first++;
-
-            if (letterIndexes.first >= NumLetters)
-            {
-                return 2;
-            }
-        }
-    }
-    
-    threadLetters->first = letterIndexes.first;
-    threadLetters->second = letterIndexes.second;
-    threadLetters->third = letterIndexes.third;
-    
-    pthread_mutex_unlock(&nextBlockMutex);
-
-    return 0;
-
 }
 
 int checkOutput(union Hash *Output)
@@ -307,10 +179,10 @@ void padSingleChunk(union Chunk *input, char * str)
 
 void md5LoopUnrolled(union Chunk *c, union Hash *Output)
 {
-	uint32_t A = At;
-	uint32_t B = Bt;
-	uint32_t C = Ct;
-	uint32_t D = Dt;
+    __m256i A = MAKE256(At);
+    __m256i B = MAKE256(Bt);
+    __m256i C = MAKE256(Ct);
+    __m256i D = MAKE256(Dt);
 
     // Round1
     Round1(A, B, C, D, c->C32[0],  S[0],  T[0]); // 1
@@ -396,14 +268,18 @@ void md5LoopUnrolled(union Chunk *c, union Hash *Output)
     Round4(C, D, A, B, c->C32[2],  S[62], T[62]); // 63
     Round4(B, C, D, A, c->C32[9],  S[63], T[63]); // 64
 
-    Output->C32[0] = At+A;
-    Output->C32[1] = Bt+B;
-    Output->C32[2] = Ct+C;
-    Output->C32[3] = Dt+D;
+    A = ADD256(A, MAKE256(At));
+    B = ADD256(B, MAKE256(Bt));
+    C = ADD256(C, MAKE256(Ct));
+    D = ADD256(D, MAKE256(Dt));
+
+    unsigned int * Aout = (unsigned int *)&A;
+    unsigned int * Bout = (unsigned int *)&B;
+    unsigned int * Cout = (unsigned int *)&C;
+    unsigned int * Dout = (unsigned int *)&D;
+
+    Output->C32[0] = Aout[0];
+    Output->C32[1] = Bout[0];
+    Output->C32[2] = Cout[0];
+    Output->C32[3] = Dout[0];
 }
-
-
-
-
-
-

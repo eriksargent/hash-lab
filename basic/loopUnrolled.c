@@ -272,8 +272,3 @@ void md5LoopUnrolled(union Chunk *c, union Hash *Output)
     Output->C32[3] = Dt+D;
 }
 
-
-
-
-
-
