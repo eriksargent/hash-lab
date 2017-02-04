@@ -67,22 +67,22 @@ long md5Search()
 	Input.C8[6] = 0x80;
 	Input.C64[7] = 0x30;
 
-	for (int i=0;i<26;i++)
+	for (int i = 0; i < NumLetters; i++)
 	{
 		Input.C8[5] = alphabet[i];
-		for (int j=0;j<26;j++)
+		for (int j = 0; j < NumLetters; j++)
 		{
 			Input.C8[4] = alphabet[j];
-			for (int k=0;k<26;k++)
+			for (int k = 0; k < NumLetters; k++)
 			{
 				Input.C8[3] = alphabet[k];
-				for (int l=0;l<26;l++)
+				for (int l = 0; l < NumLetters; l++)
 				{
 					Input.C8[2] = alphabet[l];
-					for (int m=0;m<26;m++)
+					for (int m = 0; m < NumLetters; m++)
 					{
 						Input.C8[1] = alphabet[m];
-						for (int n=0;n<26;n++)
+						for (int n = 0; n < NumLetters; n++)
 						{
 							Input.C8[0] = alphabet[n];
 							md5LoopUnrolled(&Input, &Output);
