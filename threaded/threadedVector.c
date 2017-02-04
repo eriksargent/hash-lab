@@ -4,7 +4,8 @@
 #include "md5_vector_constants.h"
 #include <arpa/inet.h>
 #include <sys/time.h>
-#include <immintrin.h>
+#include <pthread.h>
+#include <unistd.h>
 #include <math.h>
 
 
@@ -14,35 +15,75 @@ unsigned int Bt = 0xefcdab89;
 unsigned int Ct = 0x98badcfe;
 unsigned int Dt = 0x10325476;
 
-char *inputHash = "e80b5017098950fc58aad83c8c14978e";
+// char *inputHash = "e80b5017098950fc58aad83c8c14978e"; //abcdef
+// char *inputHash = "4e8645994a6f75c7a2ad4959061230c4"; //lmnopq
+// char *inputHash = "453e41d218e071ccfb2d1c99ce23906a"; //zzzzzz
+char *inputHash = "d6a280b23327bfbf909a3b44ee9b0891"; //Target hash
 
+
+typedef struct {
+    uint8_t first;
+    uint8_t second;
+    uint8_t third;
+    uint8_t fourth;
+    uint8_t fifth;
+    uint8_t sixth;
+} LetterBlock;
+
+LetterBlock letterIndexes;
+
+pthread_mutex_t nextBlockMutex;
 
 /*Function Definitions*/
-long md5Search();
 void setHashAnswer(char *);
 int checkOutput(union Hash *Output);
 void md5LoopUnrolled(union Chunk *c, union Hash *output);
-void printPaddedChunk(union Chunk Input);
 void printOutputHash(union Hash Output);
+void *thread();
+uint8_t getNextLetterBlock(LetterBlock *);
 /*End Function Definitions*/
+
+uint8_t foundPassword = 0;
 
 
 int main(int argc, char *argv[])
 {
+    //Load in the hash to find
     setHashAnswer(inputHash);
+    
+    //Get the number of threads available
+    int numThreads = sysconf(_SC_NPROCESSORS_ONLN);
+    pthread_t threads[numThreads];
 
-    union Chunk message;
-
+    //Record the starting time
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
-	long hashes = md5Search();
+    //Dispatch that many threads
+    for (int i = 0; i < numThreads; i++) 
+    {
+        pthread_create(&threads[i], NULL, thread, NULL);
+    }
+    
+    //Wait for all threads to finish
+    for (int i = 0; i < numThreads; i++) 
+    {
+        pthread_join(threads[i], NULL);
+    }
 
+    //Record the ending time after all threads have finished
     gettimeofday(&end, NULL);
 
     double secDiff = end.tv_sec - start.tv_sec;
     double nsecDiff = end.tv_usec - start.tv_usec;
     double elapsedTime = secDiff + nsecDiff / 1000000;
+
+    long hashes = (letterIndexes.first * pow(NumLetters, 5)) +
+        (letterIndexes.second * pow(NumLetters, 4)) +
+        (letterIndexes.third * pow(NumLetters, 3)) +
+        pow(NumLetters, 3) +
+        pow(NumLetters, 2) +
+        NumLetters;
     double hashRate = (double)hashes / elapsedTime;
 
     printf("\n\nTotal elapsed time: %f\n", elapsedTime);
@@ -58,94 +99,130 @@ void setHashAnswer(char *input)
     printf("\nInput hash: %016llx%016llx\n\n", Known.C64[1], Known.C64[0]);
 }
 
-long md5Search()
+void *thread() 
 {
-	union Chunk Input[8];
-    union Hash Output[8];
-
-    for (int input = 0; input < 8; input++)
+    union Chunk input[8];
+    for (int index = 0; index < 8; index++)
     {
-        memset(&Input[input].C8[0],0,64);
-        Input[input].C8[6] = 0x80;
-        Input[input].C64[7] = 0x30;
+        memset(&input[index].C8[0],0,64);
+        input[index].C8[6] = 0x80;
+        input[index].C64[7] = 0x30;
     }
 
-	for (int i = 0; i < NumLetters; i++)
-	{
-        for (int input = 0; input < 8; input++)
-    		Input[input].C8[5] = alphabet[i];
+    union Hash output[8];
 
-		for (int j = 0; j < NumLetters; j++)
-		{
-            for (int input = 0; input < 8; input++)
-                Input[input].C8[4] = alphabet[j];
+    LetterBlock letters;
 
-			for (int k = 0; k < NumLetters; k++)
-			{
-                for (int input = 0; input < 8; input++)
-                    Input[input].C8[3] = alphabet[k];
+    while (getNextLetterBlock(&letters) == 0) 
+    {
+        for (int index = 0; index < 8; index++)
+        {
+            input[index].C8[0] = alphabet[letters.first];
+            input[index].C8[1] = alphabet[letters.second];
+            input[index].C8[2] = alphabet[letters.third];
+        }
 
-				for (int l = 0; l < NumLetters / 2; l += 2)
-				{
-                    Input[0].C8[2] = alphabet[l];
-                    Input[1].C8[2] = alphabet[l];
-                    Input[2].C8[2] = alphabet[l];
-                    Input[3].C8[2] = alphabet[l];
-                    Input[4].C8[2] = alphabet[l + 1];
-                    Input[5].C8[2] = alphabet[l + 1];
-                    Input[6].C8[2] = alphabet[l + 1];
-                    Input[7].C8[2] = alphabet[l + 1];
+        while (letters.fourth < NumLetters / 2)
+        {
+            input[0].C8[3] = alphabet[letters.fourth];
+            input[1].C8[3] = alphabet[letters.fourth];
+            input[2].C8[3] = alphabet[letters.fourth];
+            input[3].C8[3] = alphabet[letters.fourth];
+            input[4].C8[3] = alphabet[letters.fourth + 1];
+            input[5].C8[3] = alphabet[letters.fourth + 1];
+            input[6].C8[3] = alphabet[letters.fourth + 1];
+            input[7].C8[3] = alphabet[letters.fourth + 1];
 
-					for (int m = 0; m < NumLetters / 2; m += 2)
-					{
-						Input[0].C8[1] = alphabet[m];
-                        Input[1].C8[1] = alphabet[m];
-                        Input[2].C8[1] = alphabet[m + 1];
-                        Input[3].C8[1] = alphabet[m + 1];
-                        Input[4].C8[1] = alphabet[m];
-                        Input[5].C8[1] = alphabet[m];
-                        Input[6].C8[1] = alphabet[m + 1];
-                        Input[7].C8[1] = alphabet[m + 1];
+            while (letters.fifth < NumLetters / 2)
+            {
+                input[0].C8[4] = alphabet[letters.fifth];
+                input[1].C8[4] = alphabet[letters.fifth];
+                input[2].C8[4] = alphabet[letters.fifth + 1];
+                input[3].C8[4] = alphabet[letters.fifth + 1];
+                input[4].C8[4] = alphabet[letters.fifth];
+                input[5].C8[4] = alphabet[letters.fifth];
+                input[6].C8[4] = alphabet[letters.fifth + 1];
+                input[7].C8[4] = alphabet[letters.fifth + 1];
 
-						for (int n = 0; n < NumLetters / 2; n += 2)
-						{
-                            Input[0].C8[1] = alphabet[n];
-                            Input[2].C8[1] = alphabet[n + 1];
-                            Input[1].C8[1] = alphabet[n];
-                            Input[3].C8[1] = alphabet[n + 1];
-                            Input[4].C8[1] = alphabet[n];
-                            Input[6].C8[1] = alphabet[n + 1];
-                            Input[5].C8[1] = alphabet[n];
-                            Input[7].C8[1] = alphabet[n + 1];
+                while (letters.sixth < NumLetters / 2)
+                {
+                    input[0].C8[5] = alphabet[letters.sixth];
+                    input[1].C8[5] = alphabet[letters.sixth + 1];
+                    input[2].C8[5] = alphabet[letters.sixth];
+                    input[3].C8[5] = alphabet[letters.sixth + 1];
+                    input[4].C8[5] = alphabet[letters.sixth];
+                    input[5].C8[5] = alphabet[letters.sixth + 1];
+                    input[6].C8[5] = alphabet[letters.sixth];
+                    input[7].C8[5] = alphabet[letters.sixth + 1];
 
-							md5LoopUnrolled(Input, Output);
+                    md5LoopUnrolled(input, output);
 
-                            for (int vecIndex = 0; vecIndex < 8; vecIndex++)
+                    for (int vecIndex = 0; vecIndex < 8; vecIndex++)
+                    {
+                        if (checkOutput(&output[vecIndex]) == 1)
+                        {
+                            foundPassword = 1;
+
+                            printOutputHash(output[vecIndex]);
+                            printf("The password was: ");
+
+                            for (int index = 0; index < 6; index++)
                             {
-    							if (checkOutput(&Output[vecIndex]) == 1)
-    							{
-    								printOutputHash(Output[vecIndex]);
-
-                                    printf("The password was: ");
-                                    for (int index = 0; index < 6; index++)
-                                    {
-                                        printf("%c", (uint8_t) Input[vecIndex].C8[index]);
-                                    }
-    								return (i * pow(NumLetters, 5)) + 
-                                        (j * pow(NumLetters, 4)) + 
-                                        (k * pow(NumLetters, 3)) + 
-                                        (l * pow(NumLetters, 2)) + 
-                                        (m * NumLetters) + n;
-    							}
+                                printf("%c", (uint8_t) input[vecIndex].C8[index]);
                             }
-						}
-					}
-				}
-			}
-		}
-	}
+                        }
+                    }
 
-    return pow(NumLetters, 6);
+                    letters.sixth += 2;
+                }
+
+                letters.sixth = 0;
+                letters.fifth += 2;
+            }
+
+            letters.fifth = 0;
+            letters.fourth += 2;
+        }
+
+        letters.fourth = 0;
+    }
+
+    return 0;
+}
+
+uint8_t getNextLetterBlock(LetterBlock *threadLetters) 
+{
+    if (foundPassword != 0)
+        return 1;
+
+    pthread_mutex_lock(&nextBlockMutex);
+    
+    letterIndexes.third++;
+    if (letterIndexes.third >= NumLetters) 
+    {
+        letterIndexes.third = 0;
+        letterIndexes.second++;
+        
+        if (letterIndexes.second >= NumLetters) 
+        {
+            letterIndexes.second = 0;
+            letterIndexes.first++;
+
+            if (letterIndexes.first >= NumLetters)
+            {
+                return 2;
+            }
+        }
+    }
+    
+    threadLetters->first = letterIndexes.first;
+    threadLetters->second = letterIndexes.second;
+    threadLetters->third = letterIndexes.third;
+    
+    pthread_mutex_unlock(&nextBlockMutex);
+
+    return 0;
+
 }
 
 int checkOutput(union Hash *Output)
@@ -172,20 +249,6 @@ int checkOutput(union Hash *Output)
     }
 
     return 0;
-}
-
-void printPaddedChunk(union Chunk Input)
-{
-	for (int index = 0; index < 63; index++)
-	{
-		 printf("%#02x ", (uint8_t) Input.C8[index]);
-
-		 if(((index+1)%8)==0)
-		 {
-		 	printf("\n");
-		 }
-	}
-	printf("\n");
 }
 
 void printOutputHash(union Hash Output)
@@ -307,3 +370,4 @@ void md5LoopUnrolled(union Chunk c[8], union Hash Output[8])
         Output[index].C32[3] = Dout[index];
     }
 }
+

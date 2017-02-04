@@ -58,6 +58,8 @@ unsigned int S[64] = {
 6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
 };
 
+#define EXPANDCHUNK(c, i) _mm256_set_epi32(c[0].C32[i], c[1].C32[i], c[2].C32[i], c[3].C32[i], c[4].C32[i], c[5].C32[i], c[6].C32[i], c[7].C32[i])
+
 #define MAKE256(a) _mm256_set1_epi32(a)
 #define AND256(a, b) _mm256_and_si256(a, b) //not a, then and a and b
 #define ANDNOT256(a, b) _mm256_andnot_si256(a, b)
@@ -77,22 +79,22 @@ unsigned int S[64] = {
 #define ROT_L(x, shift) OR256(SHIFTL256(x, shift), SHIFTR256(x, (32 - shift)))
 
 #define Round1(a, b, c, d, x, s, t) \
-a = ADD256(ADD256(a, F(b,c,d)), ADD256(MAKE256(x), MAKE256(t))); \
+a = ADD256(ADD256(a, F(b,c,d)), ADD256(x, MAKE256(t))); \
 a = ROT_L(a, s); \
 a = ADD256(a, b); \
 
 #define Round2(a, b, c, d, x, s, t) \
-a = ADD256(ADD256(a, G(b,c,d)), ADD256(MAKE256(x), MAKE256(t))); \
+a = ADD256(ADD256(a, G(b,c,d)), ADD256(x, MAKE256(t))); \
 a = ROT_L(a, s); \
 a = ADD256(a, b); \
 
 #define Round3(a, b, c, d, x, s, t)  \
-a = ADD256(ADD256(a, H(b,c,d)), ADD256(MAKE256(x), MAKE256(t))); \
+a = ADD256(ADD256(a, H(b,c,d)), ADD256(x, MAKE256(t))); \
 a = ROT_L(a, s); \
 a = ADD256(a, b); \
 
 #define Round4(a, b, c, d, x, s, t)  \
-a = ADD256(ADD256(a, I(b,c,d)), ADD256(MAKE256(x), MAKE256(t))); \
+a = ADD256(ADD256(a, I(b,c,d)), ADD256(x, MAKE256(t))); \
 a = ROT_L(a, s); \
 a = ADD256(a, b); \
 

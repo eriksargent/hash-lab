@@ -34,12 +34,9 @@ LetterBlock letterIndexes;
 pthread_mutex_t nextBlockMutex;
 
 /*Function Definitions*/
-long md5Search();
 void setHashAnswer(char *);
 int checkOutput(union Hash *Output);
-void padSingleChunk(union Chunk *input, char *str);
 void md5LoopUnrolled(union Chunk *c, union Hash *output);
-void printPaddedChunk(union Chunk Input);
 void printOutputHash(union Hash Output);
 void runMD5(union Chunk message, char * passwd);
 void *thread();
@@ -81,7 +78,16 @@ int main(int argc, char *argv[])
     double nsecDiff = end.tv_usec - start.tv_usec;
     double elapsedTime = secDiff + nsecDiff / 1000000;
 
+    long hashes = (letterIndexes.first * pow(NumLetters, 5)) +
+        (letterIndexes.second * pow(NumLetters, 4)) +
+        (letterIndexes.third * pow(NumLetters, 3)) +
+        pow(NumLetters, 3) +
+        pow(NumLetters, 2) +
+        NumLetters;
+    double hashRate = (double)hashes / elapsedTime;
+
     printf("\n\nTotal elapsed time: %f\n", elapsedTime);
+    printf("Hashes per second: %f\n", hashRate);
 
     return 0;
 }
@@ -91,54 +97,6 @@ void setHashAnswer(char *input)
     sscanf(input, "%016llx%016llx", &Known.C64[1], &Known.C64[0]);
     
     printf("\nInput hash: %016llx%016llx\n\n", Known.C64[1], Known.C64[0]);
-}
-
-long md5Search()
-{
-	union Chunk Input;
-    union Hash Output;
-	memset(&Input.C8[0],0,64);
-	Input.C8[6] = 0x80;
-	Input.C64[7] = 0x30;
-
-	for (int i=0;i<26;i++)
-	{
-		Input.C8[5] = alphabet[i];
-		for (int j=0;j<26;j++)
-		{
-			Input.C8[4] = alphabet[j];
-			for (int k=0;k<26;k++)
-			{
-				Input.C8[3] = alphabet[k];
-				for (int l=0;l<26;l++)
-				{
-					Input.C8[2] = alphabet[l];
-					for (int m=0;m<26;m++)
-					{
-						Input.C8[1] = alphabet[m];
-						for (int n=0;n<26;n++)
-						{
-							Input.C8[0] = alphabet[n];
-							md5LoopUnrolled(&Input, &Output);
-							if (checkOutput(&Output) == 1)
-							{
-								printOutputHash(Output);
-
-                                printf("The password was: ");
-                                for (int index = 0; index < 6; index++)
-                                {
-                                    printf("%c", (uint8_t) Input.C8[index]);
-                                }
-								return (i * 11881376) + (j * 456976) + (k * 17576) + (l * 676) + (m * 26) + n;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-    return 308915776; //26^6
 }
 
 void *thread() 
@@ -260,31 +218,6 @@ int checkOutput(union Hash *Output)
     }
 
     return 0;
-}
-
-void runMD5(union Chunk message, char * passwd)
-{
-    //Where to store final hash
-	union Hash output;
-
-	padSingleChunk(&message, passwd);
-	printPaddedChunk(message);
-	md5LoopUnrolled(&message,&output);
-	printOutputHash(output);
-}
-
-void printPaddedChunk(union Chunk Input)
-{
-	for (int index = 0; index < 63; index++)
-	{
-		 printf("%#02x ", (uint8_t) Input.C8[index]);
-
-		 if(((index+1)%8)==0)
-		 {
-		 	printf("\n");
-		 }
-	}
-	printf("\n");
 }
 
 void printOutputHash(union Hash Output)
