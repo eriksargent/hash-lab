@@ -93,7 +93,11 @@ long md5Search()
                                 {
                                     printf("%c", (uint8_t) Input.C8[index]);
                                 }
-								return (i * 11881376) + (j * 456976) + (k * 17576) + (l * 676) + (m * 26) + n;
+								return (i * pow(NumLetters, 5)) + 
+                                        (j * pow(NumLetters, 4)) + 
+                                        (k * pow(NumLetters, 3)) + 
+                                        (l * pow(NumLetters, 2)) + 
+                                        (m * NumLetters) + n;
 							}
 						}
 					}
