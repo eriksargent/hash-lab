@@ -4,6 +4,7 @@
 #include "md5_constants.h"
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include <math.h>
 
 // Initial first block values
 uint32_t At = 0x67452301;
