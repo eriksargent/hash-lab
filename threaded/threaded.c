@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <math.h>
 
 
 // Initial first block values
