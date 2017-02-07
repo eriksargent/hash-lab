@@ -1,20 +1,51 @@
-union Chunk
+#define F(x, y, z) ((x&y) | (~x&z))
+#define G(x, y, z) (((x) & (z)) | ((y) & (~z)))
+#define H(x, y, z) ((x) ^ (y) ^ (z))
+#define I(x, y, z) ((y) ^ ((x) | (~z)))
+
+#define Round1(a, b, c, d, x, s, t) \
+	a = (a + F(b, c, d) + x + t); \
+	a = (ROT_L(a, s)); \
+	a = (a + b); \
+
+#define Round2(a, b, c, d, x, s, t) \
+	a = (a + G(b, c, d) + x + t); \
+	a = (ROT_L(a, s)); \
+	a = (a + b); \
+
+#define Round3(a, b, c, d, x, s, t)  \
+	a = (a + H(b, c, d) + x + t); \
+	a = (ROT_L(a, s)); \
+	a = (a + b); \
+
+#define Round4(a, b, c, d, x, s, t)  \
+	a = (a + I(b, c, d) + x + t); \
+	a = (ROT_L(a, s)); \
+	a = (a + b); \
+
+#define ROT_L(x, shift) ((x<<shift)|(x>>(32-shift)))
+
+__kernel void md5Search(__global char * i1, __global char * i2, __global char * i3, __global char * i4, __global char * i5, __global char * i6, __global uint * c1, __global uint * c2, __global uint * c3, __global uint * c4)
 {
-	unsigned char   C8[64];
-	unsigned int    C32[16];
-	unsigned long	C64[8];
+
+uint id = get_global_id(0);
+__constant union Chunk
+{
+	uchar   C8[64];
+	uint    C32[16];
+	ulong	C64[8];
 };
 
 //Store the hashed value
-union Hash
+__constant union Hash
 {
-	unsigned char   C8[16];
-	unsigned int	C32[4];
-	unsigned long   C64[2];
+	uchar   C8[16];
+	uint	C32[4];
+	ulong   C64[2];
 };
 
 
-__constant unsigned int T[64] = {
+__constant uint T[64] = {
 	0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
 	0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
 	0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
@@ -46,59 +77,30 @@ __constant int S[64] = {
 	6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
 };
 
-#define F(x, y, z) ((x&y) | (~x&z))
-#define G(x, y, z) (((x) & (z)) | ((y) & (~z)))
-#define H(x, y, z) ((x) ^ (y) ^ (z))
-#define I(x, y, z) ((y) ^ ((x) | (~z)))
-
-#define Round1(a, b, c, d, x, s, t) \
-	a = (a + F(b, c, d) + x + t); \
-	a = (ROT_L(a, s)); \
-	a = (a + b); \
-
-#define Round2(a, b, c, d, x, s, t) \
-	a = (a + G(b, c, d) + x + t); \
-	a = (ROT_L(a, s)); \
-	a = (a + b); \
-
-#define Round3(a, b, c, d, x, s, t)  \
-	a = (a + H(b, c, d) + x + t); \
-	a = (ROT_L(a, s)); \
-	a = (a + b); \
-
-#define Round4(a, b, c, d, x, s, t)  \
-	a = (a + I(b, c, d) + x + t); \
-	a = (ROT_L(a, s)); \
-	a = (a + b); \
-
-#define ROT_L(x, shift) ((x<<shift)|(x>>(32-shift)))
-
-__kernel void md5Search(__global unsigned char * i1, __global unsigned char * i2, __global unsigned char * i3, __global unsigned char * i4, __global unsigned char * i5, __global unsigned char * i6, __global unsigned int * c1, __global unsigned int * c2, __global unsigned int * c3, __global unsigned int * c4)
-{
 	union Chunk c;
 	for(int i=0;i<64;i++)
 	{
-		c.C8[i] = 0;	
+		c.C8[i] = 0x00;	
 	}
+	c.C8[0] = *i1;
+	c.C8[1] = *i2;
+	c.C8[2] = *i3;
+	c.C8[3] = *i4;
+	c.C8[4] = *i5;
+	c.C8[5] = *i6;
+
 	c.C8[6] = 0x80;
 	c.C64[7] = 0x30;
 
-	c.C8[0] = i1;
-	c.C8[1] = i2;
-	c.C8[2] = i3;
-	c.C8[3] = i4;
-	c.C8[4] = i5;
-	c.C8[5] = i6;
+	uint At = 0x67452301;
+	uint Bt = 0xefcdab89;
+	uint Ct = 0x98badcfe;
+	uint Dt = 0x10325476;
 
-	unsigned int At = 0x67452301;
-	unsigned int Bt = 0xefcdab89;
-	unsigned int Ct = 0x98badcfe;
-	unsigned int Dt = 0x10325476;
-
-	unsigned int A = At;
-	unsigned int B = Bt;
-	unsigned int C = Ct;
-	unsigned int D = Dt;
+	uint A = At;
+	uint B = Bt;
+	uint C = Ct;
+	uint D = Dt;
 
 	// Round1
 	Round1(A, B, C, D, c.C32[0], S[0], T[0]); // 1
@@ -184,9 +186,9 @@ __kernel void md5Search(__global unsigned char * i1, __global unsigned char * i2
 	Round4(C, D, A, B, c.C32[2], S[62], T[62]); // 63
 	Round4(B, C, D, A, c.C32[9], S[63], T[63]); // 64
 
-	c1 = (At + A);
-	c2 = (Bt + B);
-	c3 = (Ct + C);
-	c4 = (Dt + D);
+	c1[id] = At + A;
+	c2[id] = Bt + B;
+	c3[id] = Ct + C;
+	c4[id] = Dt + D;	
 }
 
