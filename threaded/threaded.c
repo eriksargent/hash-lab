@@ -14,8 +14,8 @@ uint32_t Bt = 0xefcdab89;
 uint32_t Ct = 0x98badcfe;
 uint32_t Dt = 0x10325476;
 
-char *inputHash = "e80b5017098950fc58aad83c8c14978e"; //abcdef
-// char *inputHash = "4e8645994a6f75c7a2ad4959061230c4"; //lmnopq
+//char *inputHash = "e80b5017098950fc58aad83c8c14978e"; //abcdef
+char *inputHash = "4e8645994a6f75c7a2ad4959061230c4"; //lmnopq
 // char *inputHash = "453e41d218e071ccfb2d1c99ce23906a"; //zzzzzz
 // char *inputHash = "d6a280b23327bfbf909a3b44ee9b0891"; //Target hash
 
