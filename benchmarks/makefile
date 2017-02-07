@@ -51,5 +51,22 @@ pwck_O3: ../threaded/threadedVector.c ../threaded/md5_vector_constants.h
 
 
 
+benchmark: all
+	./pwck_avx_base.out
+	./pwck_threaded_O0.out
+	./pwck_threaded_O1.out
+	./pwck_threaded_O2.out
+	./pwck_threaded_O3.out
+	./pwck_ifcase_O0.out
+	./pwck_ifcase_O1.out
+	./pwck_ifcase_O2.out
+	./pwck_ifcase_O3.out
+	./pwck_O0.out
+	./pwck_O1.out
+	./pwck_O2.out
+	./pwck_O3.out
+
+
+
 clean:
 	rm *.out
