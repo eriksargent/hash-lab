@@ -23,7 +23,7 @@ union Hash
 
 union Hash Known;
 
-int checkOutput(union Hash Output)
+int checkOutput(union Hash Output, union Hash Known)
 {
 	if ((Output.C8[0] == Known.C8[15]) &&
 		(Output.C8[1] == Known.C8[14]) &&
@@ -58,36 +58,8 @@ void printOutputHash(union Hash Output)
 	printf("\n");
 }
 
-void setHashAnswer(char *input)
-{
-	//sscanf(input, "%016llx%016llx", &Known.C64[1], &Known.C64[0]);
-
-	Known.C8[15] = 0x11;
-	Known.C8[14] = 0x64;
-	Known.C8[13] = 0x9b;
-	Known.C8[12] = 0x43;
-	Known.C8[11] = 0x94;
-	Known.C8[10] = 0xd0;
-	Known.C8[9] = 0x9e;
-	Known.C8[8] = 0x4a;
-	Known.C8[7] = 0xba;
-	Known.C8[6] = 0x13;
-	Known.C8[5] = 0x2a;
-	Known.C8[4] = 0xd4;
-	Known.C8[3] = 0x9b;
-	Known.C8[2] = 0xd1;
-	Known.C8[1] = 0xe7;
-	Known.C8[0] = 0xdb;
-	printf("\nInput hash: %016llx%016llx\n\n", Known.C64[1], Known.C64[0]);
-}
-
-char *inputHash = "4e8645994a6f75c7a2ad4959061230c4"; //lmnopq
-
 int main()
 {
-	setHashAnswer(inputHash);
-	system("pause");
-
 	cl_device_id device_id = NULL;
 	cl_context context = NULL;
 	cl_command_queue command_queue = NULL;
@@ -102,24 +74,25 @@ int main()
 	cl_mem memobj9 = NULL;
 	cl_mem memobj10 = NULL;
 	cl_program program = NULL;
-	cl_kernel kernel[4] = { NULL, NULL, NULL, NULL };
-	//cl_kernel kernel = NULL;
+	//cl_kernel kernel[4] = { NULL, NULL, NULL, NULL };
+	cl_kernel kernel = NULL;
 	cl_platform_id platform_id = NULL;
 	cl_uint ret_num_devices;
 	cl_uint ret_num_platforms;
 	cl_int ret;
+	int err;
 
-	unsigned char input1a[4];
-	unsigned char input2a[4];
-	unsigned char input3a[4];
-	unsigned char input4a[4];
-	unsigned char input5a[4];
-	unsigned char input6a[4];
+	char *input1 = new char;
+	char *input2 = new char;
+	char *input3 = new char;
+	char *input4 = new char;
+	char *input5 = new char;
+	char *input6 = new char;
 
-	unsigned int output1a[4];
-	unsigned int output2a[4];
-	unsigned int output3a[4];
-	unsigned int output4a[4];
+	unsigned int *output1 = new unsigned int;
+	unsigned int *output2 = new unsigned int;
+	unsigned int *output3 = new unsigned int;
+	unsigned int *output4 = new unsigned int;
 
 	FILE *fp;
 	char fileName[] = "./kernel.cl";
@@ -136,9 +109,39 @@ int main()
 	source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
 	fclose(fp);
 
+	union Hash hashedOutput;
+	*input1 = 'H';
+	*input2 = 'a';
+	*input3 = 's';
+	*input4 = 'h';
+	*input5 = 'e';
+	*input6 = 'd';
+
+	*output1 = 'AAAA';
+	*output2 = 'BBBB';
+	*output3 = 'CCCC';
+	*output4 = 'DDDD';
+
+	/* Display Result */
+	printf("Input Password to be Hashed: ");
+	printf("%c", *input1);
+	printf("%c", *input2);
+	printf("%c", *input3);
+	printf("%c", *input4);
+	printf("%c", *input5);
+	printf("%c\n", *input6);
+
 	/* Get Platform and Device Info */
 	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
+	if (ret != CL_SUCCESS)
+	{
+		printf("Error 1\n");
+	}
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
+	if (ret != CL_SUCCESS)
+	{
+		printf("Error 2\n");
+	}
 
 	/* Create OpenCL context */
 	context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
@@ -147,16 +150,24 @@ int main()
 	command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 
 	/* Create Memory Buffer */
-	memobj = clCreateBuffer(context, CL_MEM_READ_ONLY, 4*sizeof(char), NULL, &ret);
-	memobj2 = clCreateBuffer(context, CL_MEM_READ_ONLY, 4 * sizeof(char), NULL, &ret);
-	memobj3 = clCreateBuffer(context, CL_MEM_READ_ONLY, 4 * sizeof(char), NULL, &ret);
-	memobj4 = clCreateBuffer(context, CL_MEM_READ_ONLY, 4 * sizeof(char), NULL, &ret);
-	memobj5 = clCreateBuffer(context, CL_MEM_READ_ONLY, 4 * sizeof(char), NULL, &ret);
-	memobj6 = clCreateBuffer(context, CL_MEM_READ_ONLY, 4 * sizeof(char), NULL, &ret);
-	memobj7 = clCreateBuffer(context, CL_MEM_READ_WRITE, 4 * MEM_SIZE, NULL, &ret);
-	memobj8 = clCreateBuffer(context, CL_MEM_READ_WRITE, 4 * MEM_SIZE, NULL, &ret);
-	memobj9 = clCreateBuffer(context, CL_MEM_READ_WRITE, 4 * MEM_SIZE, NULL, &ret);
-	memobj10 = clCreateBuffer(context, CL_MEM_READ_WRITE, 4 * MEM_SIZE, NULL, &ret);
+	memobj = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(char), NULL, &ret);
+	memobj2 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(char), NULL, &ret);
+	memobj3 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(char), NULL, &ret);
+	memobj4 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(char), NULL, &ret);
+	memobj5 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(char), NULL, &ret);
+	memobj6 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(char), NULL, &ret);
+	memobj7 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
+	memobj8 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
+	memobj9 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
+	memobj10 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
+
+	ret = clEnqueueWriteBuffer(command_queue, memobj, CL_TRUE, 0, sizeof(char), input1, 0, NULL, NULL);
+	ret = clEnqueueWriteBuffer(command_queue, memobj2, CL_TRUE, 0, sizeof(char), input2, 0, NULL, NULL);
+	ret = clEnqueueWriteBuffer(command_queue, memobj3, CL_TRUE, 0, sizeof(char), input3, 0, NULL, NULL);
+	ret = clEnqueueWriteBuffer(command_queue, memobj4, CL_TRUE, 0, sizeof(char), input4, 0, NULL, NULL);
+	ret = clEnqueueWriteBuffer(command_queue, memobj5, CL_TRUE, 0, sizeof(char), input5, 0, NULL, NULL);
+	ret = clEnqueueWriteBuffer(command_queue, memobj6, CL_TRUE, 0, sizeof(char), input6, 0, NULL, NULL);
+
 
 	/* Create Kernel Program from the source */
 	program = clCreateProgramWithSource(context, 1, (const char **)&source_str,
@@ -164,160 +175,69 @@ int main()
 
 	/* Build Kernel Program */
 	ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+	if (ret != CL_SUCCESS)
+	{
+		printf("Error 3\n");
+	}
 
 	/* Create OpenCL Kernel */
-	kernel[0] = clCreateKernel(program, "md5Search", &ret);
-	kernel[1] = clCreateKernel(program, "md5Search", &ret);
-	kernel[2] = clCreateKernel(program, "md5Search", &ret);
-	kernel[3] = clCreateKernel(program, "md5Search", &ret);
-
+	kernel = clCreateKernel(program, "md5Search", &ret);
+	
 	/* Set OpenCL Kernel Parameters */
-	for (int i = 0; i < 4; i++) {
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj2);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj3);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj4);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj5);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj6);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj7);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj8);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj9);
-		ret = clSetKernelArg(kernel[i], 0, sizeof(cl_mem), (void *)&memobj10);
-	}
+	ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&memobj);
+	ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&memobj2);
+	ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&memobj3);
+	ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&memobj4);
+	ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&memobj5);
+	ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), (void *)&memobj6);
+	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void *)&memobj7);
+	ret = clSetKernelArg(kernel, 7, sizeof(cl_mem), (void *)&memobj8);
+	ret = clSetKernelArg(kernel, 8, sizeof(cl_mem), (void *)&memobj9);
+	ret = clSetKernelArg(kernel, 9, sizeof(cl_mem), (void *)&memobj10);
 
-
+	
+	/* Execute OpenCL Kernel */ 
+	//ret = clEnqueueNDRangeKernel(command_queue, kernel, 0, NULL, NULL);
+	size_t global_item_size = 1;
+	size_t local_item_size = 1;
 	clock_t start, finish;
-	int hashesTotal;
-	int numLetters = 52;
-	char alphabet[52] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
-
-	union Hash hashedOutput[4];
-
 	start = clock();
 
-	for (int i = 0; i<numLetters; i+=4)
+	/* Execute OpenCL kernel as data parallel */
+	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
+		&global_item_size, &local_item_size, 0, NULL, NULL);
+	if (ret != CL_SUCCESS)
 	{
-		input6a[0] = alphabet[i];
-		input6a[1] = alphabet[i+1];
-		input6a[2] = alphabet[i+2];
-		input6a[3] = alphabet[i+3];
-		for (int j = 0; j<numLetters; j+=4)
-		{
-			input5a[0] = alphabet[j];
-			input5a[1] = alphabet[j + 1];
-			input5a[2] = alphabet[j + 2];
-			input5a[3] = alphabet[j + 3];
-			for (int k = 0; k<numLetters; k+=4)
-			{
-				input4a[0] = alphabet[k];
-				input4a[1] = alphabet[k + 1];
-				input4a[2] = alphabet[k + 1];
-				input4a[3] = alphabet[k + 1];
-				for (int l = 0; l<numLetters; l+=4)
-				{
-					input3a[0] = alphabet[l];
-					input3a[1] = alphabet[l + 1];
-					input3a[2] = alphabet[l + 2];
-					input3a[3] = alphabet[l + 3];
-					for (int m = 0; m<numLetters; m+=4)
-					{
-						input2a[0] = alphabet[m];
-						input2a[1] = alphabet[m + 1];
-						input2a[2] = alphabet[m + 2];
-						input2a[3] = alphabet[m + 3];
-						for (int n = 0; n<numLetters; n+=4)
-						{
-							input1a[0] = alphabet[n];
-							input1a[1] = alphabet[n + 1];
-							input1a[2] = alphabet[n + 2];
-							input1a[3] = alphabet[n + 3];
-
-							//printf("%c", input1);
-							//printf("%c", input2);
-							//printf("%c", input3);
-							//printf("%c", input4);
-							//printf("%c", input5);
-							//printf("%c\n", input6);
-
-							ret = clEnqueueWriteBuffer(command_queue, memobj, CL_TRUE, 0, sizeof(unsigned char), &input1a, 0, NULL, NULL);
-							ret = clEnqueueWriteBuffer(command_queue, memobj2, CL_TRUE, 0, sizeof(unsigned char), &input2a, 0, NULL, NULL);
-							ret = clEnqueueWriteBuffer(command_queue, memobj3, CL_TRUE, 0, sizeof(unsigned char), &input3a, 0, NULL, NULL);
-							ret = clEnqueueWriteBuffer(command_queue, memobj4, CL_TRUE, 0, sizeof(unsigned char), &input4a, 0, NULL, NULL);
-							ret = clEnqueueWriteBuffer(command_queue, memobj5, CL_TRUE, 0, sizeof(unsigned char), &input5a, 0, NULL, NULL);
-							ret = clEnqueueWriteBuffer(command_queue, memobj6, CL_TRUE, 0, sizeof(unsigned char), &input6a, 0, NULL, NULL);
-
-							/* Execute OpenCL Kernel */
-							for (int index = 0; index < 4; index++) {
-								ret = clEnqueueTask(command_queue, kernel[index], 0, NULL, NULL);
-							}
-
-							/* Copy results from the memory buffer */
-							ret = clEnqueueReadBuffer(command_queue, memobj7, CL_TRUE, 0, sizeof(unsigned int), &output1a, 0, NULL, NULL);
-							ret = clEnqueueReadBuffer(command_queue, memobj8, CL_TRUE, 0, sizeof(unsigned int), &output2a, 0, NULL, NULL);
-							ret = clEnqueueReadBuffer(command_queue, memobj9, CL_TRUE, 0, sizeof(unsigned int), &output3a, 0, NULL, NULL);
-							ret = clEnqueueReadBuffer(command_queue, memobj10, CL_TRUE, 0, sizeof(unsigned int), &output4a, 0, NULL, NULL);
-
-							for (int index = 0; index < 4; index++)
-							{
-								hashedOutput[index].C32[0] = output1a[index];
-								hashedOutput[index].C32[1] = output2a[index];
-								hashedOutput[index].C32[2] = output3a[index];
-								hashedOutput[index].C32[3] = output4a[index];
-							}
-							
-							for(int index=0; index<4;index++)
-							{
-								if (checkOutput(hashedOutput[index]) == 1)
-								{
-									hashesTotal = (i * pow(numLetters, 5)) +
-									(j * pow(numLetters, 4)) +
-									(k * pow(numLetters, 3)) +
-									(l * pow(numLetters, 2)) +
-									(m * numLetters) + n;
-									break;
-								}
-							}
-							
-						}
-					}
-				}
-			}
-		}
+		printf("Execute OpenCL Error\n");
 	}
+
+	/* Copy results from the memory buffer */
+	ret = clEnqueueReadBuffer(command_queue, memobj7, CL_TRUE, 0, sizeof(unsigned int), output1, 0, NULL, NULL);
+	ret = clEnqueueReadBuffer(command_queue, memobj8, CL_TRUE, 0, sizeof(unsigned int), output2, 0, NULL, NULL);
+	ret = clEnqueueReadBuffer(command_queue, memobj9, CL_TRUE, 0, sizeof(unsigned int), output3, 0, NULL, NULL);
+	ret = clEnqueueReadBuffer(command_queue, memobj10, CL_TRUE, 0, sizeof(unsigned int), output4, 0, NULL, NULL);
+
 
 	finish = clock();
 	double duration = (double)(finish - start) / CLOCKS_PER_SEC;
 
-	double hashesPerSec = hashesTotal / duration;
+	hashedOutput.C32[0] = *output1;
+	hashedOutput.C32[1] = *output2;
+	hashedOutput.C32[2] = *output3;
+	hashedOutput.C32[3] = *output4;
 
-	printf("Hashes per second = %f \n", hashesPerSec);
-
-	for (int index = 0; index < 4; index++)
-	{
-		/* Display Result */
-		printf("%c", input1a[index]);
-		printf("%c", input2a[index]);
-		printf("%c", input3a[index]);
-		printf("%c", input4a[index]);
-		printf("%c", input5a[index]);
-		printf("%c\n", input6a[index]);
-	}
-
-	for (int index = 0; index < 4; index++)
-	{
-		printOutputHash(hashedOutput[index]);
-	}
-
-
+	printf("0x%08x \n", *output1);
+	printf("0x%08x \n", *output2);
+	printf("0x%08x \n", *output3);
+	printf("0x%08x \n", *output4);
+	
+	printOutputHash(hashedOutput);
+	printf("Hash Duration = %5f seconds\n", duration);
 
 	/* Finalization */
 	ret = clFlush(command_queue);
 	ret = clFinish(command_queue);
-	ret = clReleaseKernel(kernel[0]);
-	ret = clReleaseKernel(kernel[1]);
-	ret = clReleaseKernel(kernel[2]);
-	ret = clReleaseKernel(kernel[3]);
+	ret = clReleaseKernel(kernel);
 	ret = clReleaseProgram(program);
 	ret = clReleaseMemObject(memobj);
 	ret = clReleaseMemObject(memobj2);
