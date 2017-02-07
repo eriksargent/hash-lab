@@ -44,7 +44,7 @@ uint32_t T[64] = {
 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
 };
 
-#define NumLetters 52
+#define NumLetters 26
 char alphabet[NumLetters] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z', 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
 
 int S[64] = {
