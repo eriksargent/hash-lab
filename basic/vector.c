@@ -86,7 +86,7 @@ long md5Search()
                 for (int input = 0; input < 8; input++)
                     Input[input].C8[3] = alphabet[k];
 
-				for (int l = 0; l < NumLetters / 2; l += 2)
+				for (int l = 0; l < NumLetters; l += 2)
 				{
                     Input[0].C8[2] = alphabet[l];
                     Input[1].C8[2] = alphabet[l];
@@ -97,7 +97,7 @@ long md5Search()
                     Input[6].C8[2] = alphabet[l + 1];
                     Input[7].C8[2] = alphabet[l + 1];
 
-					for (int m = 0; m < NumLetters / 2; m += 2)
+					for (int m = 0; m < NumLetters; m += 2)
 					{
 						Input[0].C8[1] = alphabet[m];
                         Input[1].C8[1] = alphabet[m];
@@ -108,7 +108,7 @@ long md5Search()
                         Input[6].C8[1] = alphabet[m + 1];
                         Input[7].C8[1] = alphabet[m + 1];
 
-						for (int n = 0; n < NumLetters / 2; n += 2)
+						for (int n = 0; n < NumLetters; n += 2)
 						{
                             Input[0].C8[1] = alphabet[n];
                             Input[2].C8[1] = alphabet[n + 1];
