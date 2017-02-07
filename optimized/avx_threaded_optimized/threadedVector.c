@@ -122,7 +122,7 @@ void *thread()
             input[index].C8[2] = alphabet[letters.third];
         }
 
-        while (letters.fourth < NumLetters / 2)
+        while (letters.fourth < NumLetters)
         {
             input[0].C8[3] = alphabet[letters.fourth];
             input[1].C8[3] = alphabet[letters.fourth];
@@ -133,7 +133,7 @@ void *thread()
             input[6].C8[3] = alphabet[letters.fourth + 1];
             input[7].C8[3] = alphabet[letters.fourth + 1];
 
-            while (letters.fifth < NumLetters / 2)
+            while (letters.fifth < NumLetters)
             {
                 input[0].C8[4] = alphabet[letters.fifth];
                 input[1].C8[4] = alphabet[letters.fifth];
@@ -144,7 +144,7 @@ void *thread()
                 input[6].C8[4] = alphabet[letters.fifth + 1];
                 input[7].C8[4] = alphabet[letters.fifth + 1];
 
-                while (letters.sixth < NumLetters / 2)
+                while (letters.sixth < NumLetters)
                 {
                     input[0].C8[5] = alphabet[letters.sixth];
                     input[1].C8[5] = alphabet[letters.sixth + 1];
@@ -166,10 +166,12 @@ void *thread()
                             printOutputHash(output[vecIndex]);
                             printf("The password was: ");
 
-                            for (int index = 0; index < 6; index++)
-                            {
-                                printf("%c", (uint8_t) input[vecIndex].C8[index]);
-                            }
+                            printf("%c", (uint8_t) input[vecIndex].C8[0]);
+                            printf("%c", (uint8_t) input[vecIndex].C8[1]);
+                            printf("%c", (uint8_t) input[vecIndex].C8[2]);
+                            printf("%c", (uint8_t) input[vecIndex].C8[3] + 1);
+                            printf("%c", (uint8_t) input[vecIndex].C8[4] - 1);
+                            printf("%c", (uint8_t) input[vecIndex].C8[5] + 1);
                         }
                     }
 

@@ -14,7 +14,8 @@ unsigned int Bt = 0xefcdab89;
 unsigned int Ct = 0x98badcfe;
 unsigned int Dt = 0x10325476;
 
-char *inputHash = "e80b5017098950fc58aad83c8c14978e";
+//char *inputHash = "e80b5017098950fc58aad83c8c14978e";
+char *inputHash = "453e41d218e071ccfb2d1c99ce23906a";
 
 
 /*Function Definitions*/

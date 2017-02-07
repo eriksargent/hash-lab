@@ -26,14 +26,14 @@ pwck_threaded_O3: ../threaded/threaded.c ../threaded/md5_constants.h
 
 
 
-pwck_ifcase_O0: ../optimization/avx_optimized/vector.c ../optimization/avx_optimized/md5_constants.h
-	gcc -o pwck_ifcase_O0.out -mavx2 -O0 -std=gnu99 ../optimization/avx_optimized/vector.c
-pwck_ifcase_O1:  ../optimization/avx_optimized/vector.c ../optimization/avx_optimized/md5_constants.h
-	gcc -o pwck_ifcase_O1.out -mavx2 -O1 -fomit-frame-pointer -std=gnu99 ../optimization/avx_optimized/vector.c
-pwck_ifcase_O2:  ../optimization/avx_optimized/vector.c ../optimization/avx_optimized/md5_constants.h
-	gcc -o pwck_ifcase_O2.out -mavx2 -O2 -fomit-frame-pointer -std=gnu99 ../optimization/avx_optimized/vector.c
-pwck_ifcase_O3:  ../optimization/avx_optimized/vector.c ../optimization/avx_optimized/md5_constants.h
-	gcc -o pwck_ifcase_O3.out -mavx2 -O3 -fomit-frame-pointer -std=gnu99 ../optimization/avx_optimized/vector.c
+pwck_ifcase_O0: ../optimized/avx_threaded_optimized/threadedVector.c ../optimized/avx_threaded_optimized/md5_vector_constants.h
+	gcc -o pwck_ifcase_O0.out -mavx2 -O0 -std=gnu99 ../optimized/avx_threaded_optimized/threadedVector.c
+pwck_ifcase_O1:  ../optimized/avx_threaded_optimized/threadedVector.c ../optimized/avx_threaded_optimized/md5_vector_constants.h
+	gcc -o pwck_ifcase_O1.out -mavx2 -O1 -fomit-frame-pointer -std=gnu99 ../optimized/avx_threaded_optimized/threadedVector.c
+pwck_ifcase_O2:  ../optimized/avx_threaded_optimized/threadedVector.c ../optimized/avx_threaded_optimized/md5_vector_constants.h
+	gcc -o pwck_ifcase_O2.out -mavx2 -O2 -fomit-frame-pointer -std=gnu99 ../optimized/avx_threaded_optimized/threadedVector.c
+pwck_ifcase_O3:  ../optimized/avx_threaded_optimized/threadedVector.c ../optimized/avx_threaded_optimized/md5_vector_constants.h
+	gcc -o pwck_ifcase_O3.out -mavx2 -O3 -fomit-frame-pointer -std=gnu99 ../optimized/avx_threaded_optimized/threadedVector.c
 
 
 

@@ -12,7 +12,8 @@ uint32_t Bt = 0xefcdab89;
 uint32_t Ct = 0x98badcfe;
 uint32_t Dt = 0x10325476;
 
-char *inputHash = "e80b5017098950fc58aad83c8c14978e";
+//char *inputHash = "e80b5017098950fc58aad83c8c14978e";
+char *inputHash = "453e41d218e071ccfb2d1c99ce23906a";
 
 
 /*Function Definitions*/
