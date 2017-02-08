@@ -1,0 +1,35 @@
+﻿  Preprocessing: kernel.cl
+  Setting target instruction set architecture to: Default (Advanced Vector Extension 2 (AVX2))
+  OpenCL Intel CPU device was found!
+  Device name: Intel(R) Core(TM) i5-4200U CPU @ 1.60GHz
+  Device version: OpenCL 1.2 (Build 10094)
+  Device vendor: Intel(R) Corporation
+  Device profile: FULL_PROFILE
+  Compilation started
+c:\Users\Weston\documents\visual studio 2013\Projects\MD5\MD5\kernel.cl(32,1): warning CL: attribute 'address_space' is ignored, place it after "union" to apply attribute to type declaration
+c:\Users\Weston\documents\visual studio 2013\Projects\MD5\MD5\kernel.cl(40,1): warning CL: attribute 'address_space' is ignored, place it after "union" to apply attribute to type declaration
+  Compilation done
+  Linking started
+  Linking done
+  Device build started
+  Device build done
+  Kernel <md5Search> was successfully vectorized (8)
+  Done.
+  md5Search info:
+  	Maximum work-group size: 8192
+  	Compiler work-group size: (0, 0, 0)
+  	Local memory size: 0
+  	Preferred multiple of work-group size: 128
+  	Minimum amount of private memory: 128
+  
+  Build succeeded!
+  
+  gpu.cpp
+gpu.cpp(103): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(211) : see declaration of 'fopen'
+gpu.cpp(150): warning C4996: 'clCreateCommandQueue': was declared deprecated
+          C:\Program Files (x86)\Intel\OpenCL SDK\6.3\include\CL/cl.h(1428) : see declaration of 'clCreateCommandQueue'
+gpu.cpp(83): warning C4101: 'err' : unreferenced local variable
+  MD5.vcxproj -> c:\Users\Weston\documents\visual studio 2013\Projects\MD5\Debug\MD5.exe
+  kernel.cl
+          1 file(s) copied.
